@@ -17,7 +17,6 @@ import multiprocessing as mp
 os.chdir("/home/joosungm/projects/def-lelliott/joosungm/projects/ssc23-case-comp")
 
 # import data
-prov_long = ["Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Nova Scotia", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan"]
 
 prov_short = ["AB", "BC", "MB", "NB", "NL", "NS", "ON", "PE", "QC", "SK"]
 
@@ -215,4 +214,16 @@ for treatment in treatments:
 
 print("done!")
 
-len(prods)
+
+result_combined = pd.DataFrame()
+
+for prov in prov_short:
+    # prov = prov_short[0]
+    temp_result = pd.read_csv("./data/user_data/01_iv_analysis/" + prov + "/tmax_log_iv2sls_result.csv")
+    temp_result["is_sig"] = np.where((temp_result["pval(param)"] < bonferroni_pval) & (temp_result["pval(endog)"] < bonferroni_pval), True, False)
+    temp_result["new_param"] = np.where(temp_result["is_sig"] == True, temp_result["param"], 0)
+    temp_result["provincename"] = prov
+    
+    result_combined = pd.concat([result_combined, temp_result], axis = 0)
+
+result_combined.to_csv("./data/user_data/01_iv_analysis/A02_iv_tavg_result.csv", index = False)
