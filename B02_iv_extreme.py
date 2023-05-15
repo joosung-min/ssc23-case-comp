@@ -16,7 +16,7 @@ import multiprocessing as mp
 os.chdir("/home/joosungm/projects/def-lelliott/joosungm/projects/ssc23-case-comp")
 
 # Import data
-weather_prod_final = pd.read_csv("./data/user_data/02_counterfactual_analysis/weather_prod_final.csv")
+weather_prod_final = pd.read_csv("./data/user_data/02_iv_extreme/weather_prod_final.csv")
 treatments = ["tmax_flag", "tmin_flag"]
 prov_names = weather_prod_final["provincename"].unique().tolist()
 industry_names = weather_prod_final.columns[weather_prod_final.columns.str.startswith("X")].tolist()
@@ -45,17 +45,18 @@ covar_df = covar_df.groupby("year").mean().reset_index()
 
 # Initialize result dataframe
 r = 0
-iv_extreme_result = pd.DataFrame(columns = ["industry", "param", "pval(param)", "pval(overid)", "pval(endog)", "provincename", "treatment"])
+iv_extreme_result = pd.DataFrame(columns = ["industry", "param", "pval(param)", "pval(overid)", "pval(endog)", "provincename", "treatment", "instr"])
 
 for treatment in treatments:
+    # treatment = treatments[0]
     
     for prov_name in prov_names:
-
+        # prov_name = prov_names[0]
         # - filter by province
         weather_prod = weather_prod_final.loc[weather_prod_final["provincename"] == prov_name, :].reset_index(drop = True)
         
         for industry_name in industry_names:    
-        
+            # industry_name = industry_names[0]
             weather_prod["log_production"] = np.log(weather_prod[industry_name] + 1)
             weather_prod["log_population"] = np.log(weather_prod["Population"] + 1)
             
@@ -82,26 +83,86 @@ for treatment in treatments:
             #  * IV: lat, lon
             #  * endog: log_production
             #  * exog: covariates
+            example_df = weather_prod_df.copy()
+            covariates = covar_cols.copy()
+            
+            iv_both = IV2SLS(
+                dependent = example_df["log_production"],
+                exog = example_df.loc[:, covariates],
+                endog = example_df.loc[:, treatment],
+                instruments = example_df.loc[:, ["lat", "lon"]],
+            ).fit()
+            
+            # - Overidentification test
+            overid_pval = iv_both.wooldridge_overid.pval
+            bonferroni_pval = 0.05/14
 
-            formula = outcome + " ~ 0 +" + "+".join(covar_cols) + "+[" + treatment + "~" + "+".join(instruments) + "]"
-            iv_model = IV2SLS.from_formula(formula, data = weather_prod_df).fit(cov_type = "robust", debiased = True)
+            if (overid_pval > bonferroni_pval):
+                
+                iv_model = iv_both
 
-            # - collect results
-            temp_extreme_result = [industry_name, 
-                                np.round(iv_model.params[treatment], 3),
-                                np.round(iv_model.pvalues[treatment], 3),
-                                np.round(iv_model.basmann.pval, 3),
-                                np.round(iv_model.wooldridge_score.pval, 3),
-                                prov_name,
-                                treatment
-                                ]
+                temp_extreme_result = [industry_name, 
+                    np.round(iv_model.params[treatment], 3), 
+                    np.round(iv_model.pvalues[treatment], 3),
+                    np.round(iv_model.wooldridge_overid.pval, 3),
+                    np.round(iv_model.wu_hausman().pval, 3),
+                    prov_name,
+                    treatment,
+                    "lat_long"]
+            else:
+
+                iv_ols = IV2SLS(
+                    dependent = example_df["log_production"],
+                    exog = example_df.loc[:, covariates + [treatment]],
+                    endog = None,
+                    instruments = None
+                ).fit()
+
+                iv_lat = IV2SLS(
+                    dependent = example_df["log_production"],
+                    exog = example_df.loc[:, covariates + ["lon"]],
+                    endog = example_df.loc[:, treatment],
+                    instruments = example_df.loc[:, ["lat"]]
+                ).fit()
+
+                iv_long = IV2SLS(
+                    dependent = example_df["log_production"],
+                    exog = example_df.loc[:, covariates + ["lat"]],
+                    endog = example_df.loc[:, treatment],
+                    instruments = example_df.loc[:, ["lon"]]
+                ).fit()    
+
+                
+                # compare two models' coefficients to OLS: iv_lat and iv_long
+                lat_diff = np.abs(iv_ols.params[treatment] - iv_lat.params[treatment])
+                long_diff = np.abs(iv_ols.params[treatment] - iv_long.params[treatment])
+
+                is_lat_endog = np.where(lat_diff < long_diff, True, False)
+                
+                # - If "lat" seems to be endogenous, use iv_long. Otherwise, use iv_lat.
+                if (is_lat_endog):
+                    iv_model = iv_long
+                    iv_instr = "long"
+                else:
+                    iv_model = iv_lat
+                    iv_instr = "lat"
+                
+                temp_extreme_result = [industry_name, 
+                    np.round(iv_model.params[treatment], 3), 
+                    np.round(iv_model.pvalues[treatment], 3),
+                    np.round(iv_both.wooldridge_overid.pval, 3),
+                    np.round(iv_model.wu_hausman().pval, 3),
+                    prov_name,
+                    treatment,
+                    iv_instr]
+            
             iv_extreme_result.loc[r] = temp_extreme_result
             r += 1
 
-iv_extreme_result
-bonferroni_pval = 0.05/len(industry_names)
+# iv_extreme_result
+
 # - is_sig == True if all of pval(param), pval(overid), pval(endog) < bonferroni_pval
-iv_extreme_result["is_sig"] = np.where((iv_extreme_result["pval(param)"] < bonferroni_pval) & (iv_extreme_result["pval(overid)"] < bonferroni_pval) & (iv_extreme_result["pval(endog)"] < bonferroni_pval), True, False)
+iv_extreme_result["is_sig"] = np.where((iv_extreme_result["pval(param)"] < bonferroni_pval) & (iv_extreme_result["pval(endog)"] < bonferroni_pval), True, False)
 iv_extreme_result["new_param"] = np.where(iv_extreme_result["is_sig"] == True, iv_extreme_result["param"], 0)
 
 iv_extreme_result.to_csv("./data/user_data/02_iv_extreme/iv_extreme_result.csv", index = False)
