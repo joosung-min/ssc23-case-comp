@@ -13,9 +13,6 @@ from linearmodels.iv import IV2SLS, IVGMMCUE
 import os
 import multiprocessing as mp
 
-os.chdir("/home/joosungm/projects/def-lelliott/joosungm/projects/ssc23-case-comp")
-
-# Import data
 weather_prod_final = pd.read_csv("./data/user_data/02_iv_extreme/weather_prod_final.csv")
 treatments = ["tmax_flag", "tmin_flag"]
 prov_names = weather_prod_final["provincename"].unique().tolist()
