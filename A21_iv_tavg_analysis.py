@@ -14,9 +14,6 @@ from linearmodels.iv import IV2SLS, IVGMMCUE
 import os
 import multiprocessing as mp
 
-os.chdir("/home/joosungm/projects/def-lelliott/joosungm/projects/ssc23-case-comp")
-
-# import data
 
 prov_short = ["AB", "BC", "MB", "NB", "NL", "NS", "ON", "PE", "QC", "SK"]
 

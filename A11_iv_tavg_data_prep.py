@@ -6,8 +6,6 @@ from meteostat import Stations, Daily, Point, Monthly
 import geopandas as gpd
 import os
 
-os.chdir("/home/joosungm/projects/def-lelliott/joosungm/projects/ssc23-case-comp")
-
 prov_long = ["Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Nova Scotia", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan"]
 
 prov_short = ["AB", "BC", "MB", "NB", "NL", "NS", "ON", "PE", "QC", "SK"]
