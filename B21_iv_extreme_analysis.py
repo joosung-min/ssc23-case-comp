@@ -67,14 +67,6 @@ for treatment in treatments:
             outcome = "log_production"
 
             # ----------------------------
-            # Check linear relationships
-            # ----------------------------
-            # - Check linear relationships
-            # smf.ols(formula = treatment + " ~ " + "+".join(instruments), data = weather_prod_df).fit().summary()
-            # smf.ols(formula = "log_production ~ tmax_flag", data = weather_prod_df).fit().summary()
-
-
-            # ----------------------------
             # IV analysis
             # ----------------------------
 

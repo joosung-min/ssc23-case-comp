@@ -68,7 +68,7 @@ for treatment in treatments:
         
         prods = prod_data.columns[2:16]
 
-        result = pd.DataFrame(columns = ["industry", "param", "pval(param)", "pval(overid)", "pval(endog)", "instr"])
+        result = pd.DataFrame(columns = ["industry", "param", "pval(param)", "pval(endog)", "instr"])
         
         for i in range(len(prods)):
             
@@ -108,13 +108,11 @@ for treatment in treatments:
                 instruments = example_df.loc[:, ["lat", "long"]],
             ).fit()
 
-            # * overid: when there are more ivs than treatments, we test whether at least one of the ivs is endogenous (i.e., directly affect both T and Y) - Woolridge test
-            # * endog: Test weather the treatment variable is in fact endogenous. - Wu-Hausman test
+            # * endog: Test weather the treatment variable is in fact endogenous. - Wu-Hausman test. H0: All endogenous variables are exogenous.
 
             result.loc[i] = [example_prod, 
                 np.round(iv_model.params[treatment], 3), 
                 np.round(iv_model.pvalues[treatment], 3),
-                np.round(iv_model.wooldridge_overid.pval, 3),   # overid test
                 np.round(iv_model.wu_hausman().pval, 3),        # endog test
                 "lat_long"]
             
@@ -126,27 +124,6 @@ for treatment in treatments:
 
         result.to_csv(result_filename, index = False)
 
-        dominant_naics = pd.DataFrame(columns = ["GeoUID", "Dominant_NAICS"])
-        d = 0
-        for guid in prod_data.GeoUID.unique():
-            # print(guid)
-            # guid = prod_data.GeoUID.unique()[0]
-            temp_df = prod_data.loc[prod_data.GeoUID == guid, :].reset_index(drop = True)
-            
-            if np.isnan(temp_df.loc[0, treatment]):
-                continue
-            else:
-                dominant_naics.loc[d, "GeoUID"] = guid
-                dominant_naics.loc[d, "Dominant_NAICS"] = temp_df.loc[0, "Dominant_NAICS"]
-                d += 1
-        
-        dominant_naics2 = dominant_naics.dropna().reset_index(drop = True).value_counts("Dominant_NAICS").reset_index()
-        dominant_naics2.columns = ["industry", "count"]
-
-        # left join result to dominant_naics
-        dominant_naics_result = pd.merge(dominant_naics2, result, left_on = "industry", right_on = "industry", how = "left")
-        dominant_naics_result.to_csv(dominant_naics_filename, index = False)
-
 print("done!")
 
 
@@ -155,7 +132,7 @@ result_combined = pd.DataFrame()
 for prov in prov_short:
     
     temp_result = pd.read_csv("./data/user_data/01_iv_analysis/" + prov + "/tmax_log_iv2sls_result.csv")
-    temp_result["is_sig"] = np.where((temp_result["pval(param)"] < bonferroni_pval) & (temp_result["pval(overid)"] < bonferroni_pval) & (temp_result["pval(endog)"] < bonferroni_pval), True, False)
+    temp_result["is_sig"] = np.where((temp_result["pval(param)"] < bonferroni_pval) & (temp_result["pval(endog)"] < bonferroni_pval), True, False)
     temp_result["new_param"] = np.where(temp_result["is_sig"] == True, temp_result["param"], 0)
     temp_result["provincename"] = prov
     
