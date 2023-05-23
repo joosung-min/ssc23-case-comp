@@ -3,6 +3,7 @@
 dump/
 practice/
 data/
+figs/
 .vscode/
 *.out
 test.py
