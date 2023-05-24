@@ -31,7 +31,4 @@ A limitation of this study that we acknowledge is that the analysis was limited 
 ### CONCLUSION
 Our study showcases the potential of instrumental variable analysis for assessing the causal effects of climate change on industrial production. The results reveal a mixed impact, with both positive and negative effects depending on the industry and region. It emphasizes the need to consider various temperature measures and the variation in effects across industries and regions when evaluating climate change's influence on industrial production. Policymakers should tailor interventions to the specific characteristics of each industry and region to mitigate adverse impacts. 
 
-![image](https://github.com/joosung-min/ssc23-case-comp/assets/42934656/22b405d3-6295-4308-8e71-dcd177b790a7)
-
-
 <br />
