@@ -3,7 +3,7 @@ Repo for [**2023 SSC Annual Meeting Case Competition #2**](https://ssc.ca/en/cas
 
 ## The Causal impacts of climate change on Canadian industrial productions: An Instrumental variable analysis using geographical features as Instruments
 
-* [Sonny Min](https://www.linkedin.com/in/joosung-sonny-min-35370b9b/), and [Donghui Son](https://www.linkedin.com/in/%EB%8F%99%ED%9D%AC-%EC%86%90-143054224/) (supervisor: Dr. [Lloyd T. Elliott](https://elliottlab.ca/))
+* [Joosung (Sonny) Min](https://www.linkedin.com/in/joosung-sonny-min-35370b9b/), and [Donghui Son](https://www.linkedin.com/in/%EB%8F%99%ED%9D%AC-%EC%86%90-143054224/) (supervisor: Dr. [Lloyd T. Elliott](https://elliottlab.ca/))
 
 Please refer to [A22_iv_tavg_example.ipynb](/A22_iv_tavg_example.ipynb) for an example of our analysis.
 
